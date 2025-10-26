@@ -2,7 +2,6 @@
 const CACHE_NAME = 'pwa-notification-app-v1';
 const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
   '/manifest.json'
 ];
 
