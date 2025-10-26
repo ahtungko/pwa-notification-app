@@ -1,6 +1,7 @@
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAStatus } from "@/components/PWAStatus";
 import { NotificationControl } from "@/components/NotificationControl";
+import { NotificationScheduler } from "@/components/NotificationScheduler";
 import { usePWA } from "@/hooks/usePWA";
 import { APP_TITLE } from "@/const";
 
@@ -42,6 +43,7 @@ export default function Home() {
           {/* Right Column */}
           <div className="space-y-8">
             <NotificationControl />
+            <NotificationScheduler />
           </div>
         </div>
 
