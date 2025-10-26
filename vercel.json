@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "server/index.ts": {
+      "memory": 1024
+    }
+  },
   "builds": [
     {
       "src": "package.json",
@@ -10,6 +15,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/(send-notification|subscribe|unsubscribe)",
+      "dest": "/server/index.ts"
+    },
     {
       "src": "/(.*)",
       "dest": "/dist/public/$1"
