@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -38,14 +38,14 @@ async function startServer() {
   app.use(express.static(staticPath));
 
   // Subscribe route
-  app.post('/subscribe', (req, res) => {
+  app.post('/subscribe', (req: Request, res: Response) => {
     const subscription = req.body;
     subscriptions.push(subscription);
     res.status(201).json({});
   });
 
   // Unsubscribe route
-  app.post('/unsubscribe', (req, res) => {
+  app.post('/unsubscribe', (req: Request, res: Response) => {
     const subscription = req.body;
     subscriptions = subscriptions.filter(
       (s) => s.endpoint !== subscription.endpoint
@@ -54,7 +54,7 @@ async function startServer() {
   });
 
   // Send notification route
-  app.post('/send-notification', (req, res) => {
+  app.post('/send-notification', (req: Request, res: Response) => {
     const notificationPayload = {
       title: req.body.title || 'Test Notification',
       body: req.body.body || 'This is a test notification',
@@ -79,7 +79,7 @@ async function startServer() {
   });
 
   // Handle client-side routing - serve index.html for all routes
-  app.get('*', (_req, res) => {
+  app.get('*', (_req: Request, res: Response) => {
     res.sendFile(path.join(staticPath, 'index.html'));
   });
 
