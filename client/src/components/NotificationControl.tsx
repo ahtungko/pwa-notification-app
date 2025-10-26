@@ -8,7 +8,10 @@ export function NotificationControl() {
     permission,
     isSupported,
     notificationCount,
+    isSubscribed,
     requestPermission,
+    subscribeToPush,
+    unsubscribeFromPush,
     sendTestNotification
   } = useNotification();
 
@@ -81,6 +84,21 @@ export function NotificationControl() {
               )}
             </div>
 
+            {/* Subscription Status */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Subscription Status
+                  </p>
+                  <p className={`font-semibold ${isSubscribed ? 'text-green-600' : 'text-red-600'}`}>
+                    {isSubscribed ? 'Subscribed' : 'Not Subscribed'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Notification Count */}
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
               <div>
@@ -106,6 +124,24 @@ export function NotificationControl() {
             </Button>
           )}
 
+          {permission === 'granted' && !isSubscribed && (
+            <Button
+              onClick={subscribeToPush}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Subscribe to Push
+            </Button>
+          )}
+
+          {permission === 'granted' && isSubscribed && (
+            <Button
+              onClick={unsubscribeFromPush}
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              Unsubscribe from Push
+            </Button>
+          )}
+
           {permission === 'granted' && (
             <Button
               onClick={sendTestNotification}
@@ -127,4 +163,3 @@ export function NotificationControl() {
     </Card>
   );
 }
-

@@ -1,18 +1,35 @@
 import { useEffect, useState } from 'react';
 
+// TODO: Add VAPID public key
+const VAPID_PUBLIC_KEY =
+  'BElFVjDMeBiP69hZLqeLBQnlALEh_euEXLsWJKsQXcgTmOkY4XQ63xnfsvLbdbTQhQjs3LenRlTSMQCdQuelyTE';
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export type NotificationPermission = 'default' | 'granted' | 'denied';
 
 export interface NotificationState {
   permission: NotificationPermission;
   isSupported: boolean;
   notificationCount: number;
+  isSubscribed: boolean;
 }
 
 export function useNotification() {
   const [state, setState] = useState<NotificationState>({
     permission: 'default',
     isSupported: 'Notification' in window,
-    notificationCount: 0
+    notificationCount: 0,
+    isSubscribed: false
   });
 
   useEffect(() => {
@@ -23,6 +40,17 @@ export function useNotification() {
     // Check current permission
     const permission = Notification.permission as NotificationPermission;
     setState((prev) => ({ ...prev, permission }));
+
+    // Check if subscribed
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.pushManager.getSubscription().then((subscription) => {
+          if (subscription) {
+            setState((prev) => ({ ...prev, isSubscribed: true }));
+          }
+        });
+      });
+    }
 
     // Listen for notification events
     if ('serviceWorker' in navigator) {
@@ -59,6 +87,53 @@ export function useNotification() {
     return false;
   };
 
+  const subscribeToPush = async () => {
+    if (!('serviceWorker' in navigator)) {
+      console.error('Service workers not supported');
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+
+    await fetch('/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    setState((prev) => ({ ...prev, isSubscribed: true }));
+  };
+
+  const unsubscribeFromPush = async () => {
+    if (!('serviceWorker' in navigator)) {
+      console.error('Service workers not supported');
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      await fetch('/unsubscribe', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      await subscription.unsubscribe();
+
+      setState((prev) => ({ ...prev, isSubscribed: false }));
+    }
+  };
+
   const sendNotification = async (
     title: string,
     options?: NotificationOptions
@@ -76,26 +151,13 @@ export function useNotification() {
       }
     }
 
-    // Try to use service worker if available
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'SEND_NOTIFICATION',
-        title,
-        options
-      });
-    } else {
-      // Fallback to direct notification
-      new Notification(title, {
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        ...options
-      });
-    }
-
-    setState((prev) => ({
-      ...prev,
-      notificationCount: prev.notificationCount + 1
-    }));
+    await fetch('/send-notification', {
+      method: 'POST',
+      body: JSON.stringify({ title, body: options?.body }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   };
 
   const sendTestNotification = () => {
@@ -112,8 +174,11 @@ export function useNotification() {
   return {
     ...state,
     requestPermission,
+    subscribeToPush,
+    unsubscribeFromPush,
     sendNotification,
     sendTestNotification
   };
 }
+
 
