@@ -21,8 +21,8 @@
 - [x] Add installation status display
 
 ## Deployment
-- [ ] Prepare project for Vercel deployment
-- [ ] Deploy to Vercel
+- [x] Prepare project for Vercel deployment
+- [ ] Deploy to Vercel (click Publish button in UI)
 - [ ] Test PWA features on deployed site
 - [ ] Verify notifications work on production
 
